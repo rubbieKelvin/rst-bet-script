@@ -23,7 +23,17 @@ fn play(wallet: i32) -> Result<GameTermination, ParseIntError> {
     let stake_prompt = format!("How much do you want to stake? (max: ${}) ", wallet);
     let stake = input(&stake_prompt).unwrap().trim().parse::<i32>()?;
 
+    if stake > wallet {
+        println!("You dont have up to {}", stake);
+        return Ok(GameTermination::PlayAgain(0));
+    } else if stake == 0 {
+        println!("Stake should be greater than 0");
+        return Ok(GameTermination::PlayAgain(0));
+    }
+
     println!("Generating new random number (0 - 5)...");
+
+    let gain: i32;
 
     let number = thread_rng().gen_range(0..5);
     let user_number = input("Guess the random number: ")
@@ -33,18 +43,26 @@ fn play(wallet: i32) -> Result<GameTermination, ParseIntError> {
     let won = user_number == number;
 
     if won {
+        gain = stake;
         println!(
             "You won ${}!\nYour new wallet balance: ${}.00",
             stake,
-            wallet + stake
+            wallet + gain
         );
     } else {
+        gain = -stake;
+
         println!(
-            "You lost ${}\nThe random number was{}\nYour new wallet balance: ${}.00",
+            "You lost ${}\nThe random number was: {}\nYour new wallet balance: ${}.00",
             stake,
             number,
-            wallet - stake
+            wallet + gain
         )
+    }
+
+    if (wallet + gain) <= 0 {
+        println!("You exausted your stash");
+        return Ok(GameTermination::Quit);
     }
 
     let play_again = input("Do you want to play again? ")

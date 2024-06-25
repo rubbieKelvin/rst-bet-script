@@ -68,7 +68,7 @@ fn play(wallet: i32) -> Result<GameTermination, ParseIntError> {
 fn main() -> Result<(), String> {
     let mut wallet: i32 = 1000;
 
-    while wallet != 0 {
+    while wallet > 0 {
         match play(wallet) {
             Ok(state) => match state {
                 GameTermination::PlayAgain(gains) => wallet += gains,

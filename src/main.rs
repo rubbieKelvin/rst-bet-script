@@ -1,8 +1,9 @@
 use std::{
     io::{stdin, stdout, Write},
     num::ParseIntError,
-    ops::Div,
 };
+
+use rand::{thread_rng, Rng};
 
 enum GameTermination {
     Quit,
@@ -18,17 +19,13 @@ fn input(propmt: &str) -> Result<String, String> {
     return Ok(res);
 }
 
-fn play(_username: &String, wallet: i32) -> Result<GameTermination, ParseIntError> {
+fn play(wallet: i32) -> Result<GameTermination, ParseIntError> {
     let stake_prompt = format!("How much do you want to stake? (max: ${}) ", wallet);
     let stake = input(&stake_prompt).unwrap().trim().parse::<i32>()?;
 
-    let leverage_prompt: String = format!("How much leverage? (1-{})x ", wallet.div(stake));
-    let leverage = input(&leverage_prompt).unwrap().trim().parse::<i32>()?;
+    println!("Generating new random number (0 - 5)...");
 
-    println!("Generating new random number...");
-
-    let gains: i32 = stake * leverage;
-    let number = 0;
+    let number = thread_rng().gen_range(0..5);
     let user_number = input("Guess the random number: ")
         .unwrap()
         .trim()
@@ -38,14 +35,15 @@ fn play(_username: &String, wallet: i32) -> Result<GameTermination, ParseIntErro
     if won {
         println!(
             "You won ${}!\nYour new wallet balance: ${}.00",
-            gains,
-            wallet + gains
+            stake,
+            wallet + stake
         );
     } else {
         println!(
-            "You lost ${}\nYour new wallet balance: ${}.00",
-            gains,
-            wallet - gains
+            "You lost ${}\nThe random number was{}\nYour new wallet balance: ${}.00",
+            stake,
+            number,
+            wallet - stake
         )
     }
 
@@ -57,9 +55,9 @@ fn play(_username: &String, wallet: i32) -> Result<GameTermination, ParseIntErro
     if play_again.len() > 0 && !(play_again == "n" || play_again == "no") {
         return Ok(GameTermination::PlayAgain({
             if won {
-                gains
+                stake
             } else {
-                -gains
+                -stake
             }
         }));
     } else {
@@ -69,10 +67,9 @@ fn play(_username: &String, wallet: i32) -> Result<GameTermination, ParseIntErro
 
 fn main() -> Result<(), String> {
     let mut wallet: i32 = 1000;
-    let username = input("Hi, what's your name? ")?;
 
     while wallet != 0 {
-        match play(&username, wallet) {
+        match play(wallet) {
             Ok(state) => match state {
                 GameTermination::PlayAgain(gains) => wallet += gains,
                 GameTermination::Quit => {
